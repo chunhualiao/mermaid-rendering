@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mermaid Live Renderer</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; background-color: #f4f4f4; color: #333; }
+        .container { max-width: 1200px; margin: auto; background: #fff; padding: 2em; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: flex; gap: 2em;}
+        .input-area { flex: 1; }
+        .preview-area { flex: 1; border-left: 1px solid #eee; padding-left: 2em; }
+        h1 { color: #555; text-align: center; margin-bottom: 1em; width: 100%;}
+        label { display: block; margin-top: 1em; font-weight: bold; }
+        textarea { width: 95%; min-height: 300px; margin-top: 0.5em; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: monospace; font-size: 1rem; }
+        select, button { padding: 0.8em 1.2em; margin-top: 0.5em; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; cursor: pointer; margin-right: 0.5em; }
+        button.primary { background-color: #5cb85c; color: white; border-color: #4cae4c; font-weight: bold; }
+        button.primary:hover { background-color: #4cae4c; }
+        button.secondary { background-color: #5bc0de; color: white; border-color: #46b8da; }
+        button.secondary:hover { background-color: #31b0d5; }
+        .options { display: flex; gap: 1em; align-items: center; margin-top: 1em; flex-wrap: wrap;}
+        .flash { padding: 1em; margin-bottom: 1em; border-radius: 5px; border: 1px solid transparent; }
+        .flash.error { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .flash.warning { background-color: #fff3cd; color: #856404; border-color: #ffeeba; }
+        .flash.info { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb; }
+        #preview-box { margin-top: 1em; padding: 1em; border: 1px solid #ccc; border-radius: 4px; min-height: 300px; text-align: center; background-color: #fdfdfd; overflow: auto; display: flex; justify-content: center; align-items: center;}
+        #preview-box img { max-width: 100%; height: auto; }
+        #preview-box svg { max-width: 100%; height: auto; }
+        #preview-status { margin-top: 0.5em; font-style: italic; color: #777; min-height: 1.2em;}
+    </style>
+</head>
+</head>
+<body>
+    <div class="container">
+        <div class="input-area">
+            <h1>Mermaid Input</h1>
+
+            <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+            <!-- Main form for final download -->
+            <form id="download-form" action="{{ url_for('render_mermaid') }}" method="post">
+                <label for="mermaid_code">Mermaid Code: (Edit the example below or paste your own)</label>
+                <textarea id="mermaid_code" name="mermaid_code" required>{{ default_code }}</textarea>
+
+                <div class="options">
+                    <div>
+                        <label for="output_format">Format:</label>
+                        <select id="output_format" name="output_format">
+                            <option value="png">PNG</option>
+                            <option value="svg" selected>SVG</option> <!-- Default to SVG for better preview -->
+                            <option value="pdf">PDF</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="theme">Theme:</label>
+                        <select id="theme" name="theme">
+                            <option value="default" selected>Default</option>
+                            <option value="forest">Forest</option>
+                            <option value="dark">Dark</option>
+                            <option value="neutral">Neutral</option>
+                        </select>
+                    </div>
+                </div>
+
+                <br><br>
+                <!-- Download Button (submits the form) -->
+                <button type="submit" class="primary">Download Diagram</button>
+                <!-- Preview button removed, preview updates automatically -->
+            </form>
+        </div>
+
+        <div class="preview-area">
+            <h1>Live Preview</h1>
+            <div id="preview-status">Enter code and click Preview.</div>
+            <div id="preview-box">
+                <!-- Preview will be loaded here by JavaScript -->
+                <p style="color: #aaa;">Preview Area</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Debounce function
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        const previewBox = document.getElementById('preview-box');
+        const previewStatus = document.getElementById('preview-status');
+        const mermaidCodeInput = document.getElementById('mermaid_code');
+        const outputFormatSelect = document.getElementById('output_format'); // Still needed for download format
+        const themeSelect = document.getElementById('theme');
+
+        // Function to fetch and update preview
+        const updatePreview = async () => {
+            const mermaidCode = mermaidCodeInput.value;
+            // Preview will always use SVG for best results and simplicity, download format is separate
+            const previewFormat = 'svg';
+            const theme = themeSelect.value;
+
+            if (!mermaidCode.trim()) {
+                // Don't show error for empty input, just clear preview
+                previewStatus.textContent = 'Enter code to see preview.';
+                previewStatus.style.color = '#777';
+                previewBox.innerHTML = '<p style="color: #aaa;">Preview Area</p>';
+                return;
+            }
+
+            previewStatus.textContent = 'Generating preview...';
+            previewStatus.style.color = '#777';
+
+
+            previewBox.innerHTML = '<p style="color: #aaa;">Loading...</p>'; // Show loading indicator
+
+            try {
+                const response = await fetch("{{ url_for('preview_mermaid') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        mermaid_code: mermaidCode,
+                        output_format: previewFormat, // Always request SVG for preview
+                        theme: theme,
+                    }),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                previewBox.innerHTML = ''; // Clear previous preview/loading message
+                if (result.format === 'png') {
+                    const img = document.createElement('img');
+                    img.src = `data:image/png;base64,${result.data}`;
+                    img.alt = 'Mermaid Diagram Preview';
+                    previewBox.appendChild(img);
+                } else if (result.format === 'svg') {
+                    // Directly insert SVG markup
+                    previewBox.innerHTML = result.data;
+                     // Optional: Re-run mermaid script if needed for interactivity (if using mermaid.js library client-side)
+                     // if (typeof mermaid !== 'undefined') { mermaid.run({nodes: [previewBox]}); }
+                }
+                previewStatus.textContent = `Preview updated (SVG).`; // Preview is always SVG now
+                previewStatus.style.color = 'green';
+
+            } catch (error) {
+                console.error('Error fetching preview:', error);
+                previewStatus.textContent = `Error: ${error.message}`;
+                previewStatus.style.color = 'red';
+                previewBox.innerHTML = '<p style="color: red;">Failed to load preview.</p>';
+            }
+        };
+
+        // Debounced version of the updatePreview function
+        const debouncedUpdatePreview = debounce(updatePreview, 750); // 750ms delay
+
+        // Event listener for textarea input
+        mermaidCodeInput.addEventListener('input', debouncedUpdatePreview);
+
+        // Also update preview if theme changes
+        themeSelect.addEventListener('change', debouncedUpdatePreview);
+
+        // Initial preview load on page ready
+        document.addEventListener('DOMContentLoaded', () => {
+            if (mermaidCodeInput.value.trim()) {
+                 previewStatus.textContent = 'Rendering initial example...';
+                 updatePreview(); // Render the default code on load
+            } else {
+                 previewStatus.textContent = 'Enter code to see preview.';
+            }
+        });
+    </script>
+</body>
+</html>
