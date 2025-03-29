@@ -14,10 +14,14 @@ Check out the configuration reference at https://huggingface.co/docs/hub/spaces-
 
 This Flask application provides a web interface for rendering diagrams from [Mermaid](https://mermaid.js.org/) syntax code. It features a live preview that updates as you type and allows downloading the final diagram as PNG, SVG, or PDF.
 
+![Application Screenshot](sample.png)
+*Screenshot of the Mermaid Live Renderer interface.*
+
 ## Features
 
 *   Web-based interface for entering Mermaid code.
 *   Live preview of the diagram (SVG) that updates automatically as you type or change the theme.
+*   Zoom and pan controls (buttons and drag-to-pan) for the live preview area.
 *   Selectable themes (Default, Forest, Dark, Neutral).
 *   Download the rendered diagram as PNG, SVG, or PDF.
 *   Uses `@mermaid-js/mermaid-cli` (mmdc) behind the scenes.
