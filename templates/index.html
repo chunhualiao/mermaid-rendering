@@ -23,9 +23,20 @@
         .flash.warning { background-color: #fff3cd; color: #856404; border-color: #ffeeba; }
         .flash.info { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb; }
         #preview-box { margin-top: 1em; padding: 1em; border: 1px solid #ccc; border-radius: 4px; min-height: 300px; text-align: center; background-color: #fdfdfd; overflow: auto; display: flex; justify-content: center; align-items: center;}
-        #preview-box img { max-width: 100%; height: auto; }
-        #preview-box svg { max-width: 100%; height: auto; }
+        #preview-box img, #preview-box svg { display: block; /* Prevent extra space below */ }
+        #preview-content-wrapper { /* Inner wrapper for transformations */
+            width: 100%;
+            height: 100%;
+            transition: transform 0.2s ease-out; /* Smooth transitions */
+            transform-origin: center center; /* Zoom from center */
+            cursor: grab; /* Indicate pannable */
+        }
+        #preview-content-wrapper:active {
+             cursor: grabbing;
+        }
         #preview-status { margin-top: 0.5em; font-style: italic; color: #777; min-height: 1.2em;}
+        .preview-controls { text-align: center; margin-bottom: 0.5em; }
+        .preview-controls button { padding: 0.3em 0.6em; font-size: 0.9rem; min-width: 30px; }
     </style>
 </head>
 </head>
@@ -33,6 +44,7 @@
     <div class="container">
         <div class="input-area">
             <h1>Mermaid Input</h1>
+            <p style="font-size: 0.9em; color: #666; margin-top: -0.5em; margin-bottom: 1.5em;">Enter Mermaid code below. The preview on the right updates automatically.</p>
 
             <!-- Flash messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -45,8 +57,8 @@
 
             <!-- Main form for final download -->
             <form id="download-form" action="{{ url_for('render_mermaid') }}" method="post">
-                <label for="mermaid_code">Mermaid Code: (Edit the example below or paste your own)</label>
-                <textarea id="mermaid_code" name="mermaid_code" required>{{ default_code }}</textarea>
+                <label for="mermaid_code">Mermaid Code:</label>
+                <textarea id="mermaid_code" name="mermaid_code" required placeholder="e.g., graph TD; A-->B;">{{ default_code }}</textarea>
 
                 <div class="options">
                     <div>
@@ -78,10 +90,22 @@
 
         <div class="preview-area">
             <h1>Live Preview</h1>
-            <div id="preview-status">Enter code and click Preview.</div>
+             <p style="font-size: 0.9em; color: #666; margin-top: -0.5em; margin-bottom: 0.5em;">Use controls to zoom/pan, or click & drag the preview.</p>
+            <div id="preview-status">Enter code to see preview.</div>
+            <div class="preview-controls">
+                <button id="zoom-in">+</button>
+                <button id="zoom-out">-</button>
+                <button id="pan-up">↑</button>
+                <button id="pan-down">↓</button>
+                <button id="pan-left">←</button>
+                <button id="pan-right">→</button>
+                <button id="reset-view">Reset</button>
+            </div>
             <div id="preview-box">
-                <!-- Preview will be loaded here by JavaScript -->
-                <p style="color: #aaa;">Preview Area</p>
+                <div id="preview-content-wrapper">
+                    <!-- Preview will be loaded here by JavaScript -->
+                    <p style="color: #aaa;">Preview Area</p>
+                </div>
             </div>
         </div>
     </div>
@@ -101,6 +125,7 @@
         }
 
         const previewBox = document.getElementById('preview-box');
+        const previewContentWrapper = document.getElementById('preview-content-wrapper');
         const previewStatus = document.getElementById('preview-status');
         const mermaidCodeInput = document.getElementById('mermaid_code');
         const outputFormatSelect = document.getElementById('output_format'); // Still needed for download format
@@ -117,7 +142,8 @@
                 // Don't show error for empty input, just clear preview
                 previewStatus.textContent = 'Enter code to see preview.';
                 previewStatus.style.color = '#777';
-                previewBox.innerHTML = '<p style="color: #aaa;">Preview Area</p>';
+                previewContentWrapper.innerHTML = '<p style="color: #aaa;">Preview Area</p>';
+                resetTransform(); // Reset view when input is empty
                 return;
             }
 
@@ -125,7 +151,7 @@
             previewStatus.style.color = '#777';
 
 
-            previewBox.innerHTML = '<p style="color: #aaa;">Loading...</p>'; // Show loading indicator
+            previewContentWrapper.innerHTML = '<p style="color: #aaa;">Loading...</p>'; // Show loading indicator in the wrapper
 
             try {
                 const response = await fetch("{{ url_for('preview_mermaid') }}", {
@@ -146,18 +172,27 @@
                 }
 
                 const result = await response.json();
+                resetTransform(); // Reset view before loading new content
 
-                previewBox.innerHTML = ''; // Clear previous preview/loading message
+                previewContentWrapper.innerHTML = ''; // Clear previous preview/loading message
                 if (result.format === 'png') {
                     const img = document.createElement('img');
                     img.src = `data:image/png;base64,${result.data}`;
                     img.alt = 'Mermaid Diagram Preview';
-                    previewBox.appendChild(img);
+                    // Prevent dragging the image itself, we'll handle panning
+                    img.style.pointerEvents = 'none';
+                    previewContentWrapper.appendChild(img);
                 } else if (result.format === 'svg') {
-                    // Directly insert SVG markup
-                    previewBox.innerHTML = result.data;
-                     // Optional: Re-run mermaid script if needed for interactivity (if using mermaid.js library client-side)
-                     // if (typeof mermaid !== 'undefined') { mermaid.run({nodes: [previewBox]}); }
+                    // Directly insert SVG markup into the wrapper
+                    previewContentWrapper.innerHTML = result.data;
+                    const svgElement = previewContentWrapper.querySelector('svg');
+                    if (svgElement) {
+                        // Make SVG take up space correctly and prevent internal pointer events interfering
+                        svgElement.style.maxWidth = '100%';
+                        svgElement.style.height = 'auto';
+                        svgElement.style.display = 'block';
+                        svgElement.style.pointerEvents = 'none';
+                    }
                 }
                 previewStatus.textContent = `Preview updated (SVG).`; // Preview is always SVG now
                 previewStatus.style.color = 'green';
@@ -166,9 +201,108 @@
                 console.error('Error fetching preview:', error);
                 previewStatus.textContent = `Error: ${error.message}`;
                 previewStatus.style.color = 'red';
-                previewBox.innerHTML = '<p style="color: red;">Failed to load preview.</p>';
+                previewContentWrapper.innerHTML = '<p style="color: red;">Failed to load preview.</p>';
             }
         };
+
+        // --- Zoom and Pan Logic ---
+        let scale = 1;
+        let translateX = 0;
+        let translateY = 0;
+        const zoomStep = 0.1;
+        const panStep = 30; // pixels
+
+        function applyTransform() {
+            previewContentWrapper.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+        }
+
+        function resetTransform() {
+            scale = 1;
+            translateX = 0;
+            translateY = 0;
+            applyTransform();
+        }
+
+        // Button Event Listeners
+        document.getElementById('zoom-in').addEventListener('click', () => {
+            scale += zoomStep;
+            applyTransform();
+        });
+
+        document.getElementById('zoom-out').addEventListener('click', () => {
+            scale = Math.max(0.1, scale - zoomStep); // Prevent zooming out too much
+            applyTransform();
+        });
+
+        document.getElementById('pan-up').addEventListener('click', () => {
+            translateY -= panStep;
+            applyTransform();
+        });
+
+        document.getElementById('pan-down').addEventListener('click', () => {
+            translateY += panStep;
+            applyTransform();
+        });
+
+        document.getElementById('pan-left').addEventListener('click', () => {
+            translateX -= panStep;
+            applyTransform();
+        });
+
+        document.getElementById('pan-right').addEventListener('click', () => {
+            translateX += panStep;
+            applyTransform();
+        });
+
+        document.getElementById('reset-view').addEventListener('click', resetTransform);
+
+        // --- Drag to Pan Logic ---
+        let isDragging = false;
+        let startX, startY;
+        let initialTranslateX, initialTranslateY;
+
+        previewBox.addEventListener('mousedown', (e) => {
+            // Only start drag if clicking directly on the preview box (not buttons etc.)
+            if (e.target === previewBox || e.target === previewContentWrapper) {
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                initialTranslateX = translateX;
+                initialTranslateY = translateY;
+                previewContentWrapper.style.transition = 'none'; // Disable transition during drag
+                previewContentWrapper.style.cursor = 'grabbing'; // Change cursor
+                previewBox.style.userSelect = 'none'; // Prevent text selection during drag
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const currentX = e.clientX;
+            const currentY = e.clientY;
+            translateX = initialTranslateX + (currentX - startX);
+            translateY = initialTranslateY + (currentY - startY);
+            applyTransform();
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                previewContentWrapper.style.transition = 'transform 0.2s ease-out'; // Re-enable transition
+                previewContentWrapper.style.cursor = 'grab'; // Restore cursor
+                previewBox.style.userSelect = ''; // Re-enable text selection
+            }
+        });
+
+        // Prevent dragging state from sticking if mouse leaves the window
+        document.addEventListener('mouseleave', () => {
+             if (isDragging) {
+                isDragging = false;
+                previewContentWrapper.style.transition = 'transform 0.2s ease-out';
+                previewContentWrapper.style.cursor = 'grab';
+                previewBox.style.userSelect = '';
+            }
+        });
+
 
         // Debounced version of the updatePreview function
         const debouncedUpdatePreview = debounce(updatePreview, 750); // 750ms delay
