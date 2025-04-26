@@ -35,46 +35,55 @@ This Flask application provides a web interface for rendering diagrams from [Mer
 ├── requirements.txt        # Python dependencies (Flask)
 ├── templates/
 │   └── index.html          # HTML template for the web interface
-├── venv/                   # Python virtual environment (created locally/on server)
+├── Dockerfile              # Instructions to build the Docker image
 └── README.md               # This file
 ```
 
 ## Prerequisites
 
-### Local Machine (for testing)
+*   [Docker](https://docs.docker.com/get-docker/) installed on your local machine or deployment server.
 
-*   Python 3 & pip
-*   Node.js & npm
-*   `@mermaid-js/mermaid-cli` installed globally (`npm install -g @mermaid-js/mermaid-cli`)
+## Deployment with Docker
 
-### Azure Ubuntu VM (for deployment)
+This is the recommended way to run the application, as it bundles all dependencies.
 
-*   An Azure Virtual Machine running Ubuntu (e.g., Ubuntu 20.04 LTS or later).
-*   SSH access to the VM.
-*   Ability to configure Network Security Groups (NSGs) in Azure portal.
-*   `sudo` privileges on the VM.
-
-## Local Testing
-
-1.  **Clone/Download:** Get the application files (`app.py`, `mermaid_renderer.py`, `requirements.txt`, `templates/`).
-2.  **Install Prerequisites:** Ensure Python 3, pip, Node.js, npm, and `@mermaid-js/mermaid-cli` are installed locally.
-3.  **Create Virtual Environment:**
+1.  **Clone/Download:** Get the application files (`app.py`, `mermaid_renderer.py`, `requirements.txt`, `templates/`, `Dockerfile`).
+2.  **Generate Secret Key:** Create a strong secret key for Flask sessions. You can generate one using:
     ```bash
-    cd /path/to/project/directory
-    python3 -m venv venv
-    source venv/bin/activate
+    python -c 'import secrets; print(secrets.token_hex(16))'
     ```
-4.  **Install Dependencies:**
+    Keep this key safe and use it in the next step.
+3.  **Build the Docker Image:** Navigate to the project directory in your terminal and run:
     ```bash
-    pip install -r requirements.txt
+    # Replace 'mermaid-renderer-app' with your desired image name/tag
+    docker build -t mermaid-renderer-app .
     ```
-5.  **Run Development Server:**
+4.  **Run the Docker Container:**
     ```bash
-    python app.py
+    # Replace 'YOUR_GENERATED_SECRET_KEY' with the key from step 2.
+    # -d: Run in detached mode (background)
+    # -p 80:5001: Map port 80 on the host to port 5001 in the container
+    # --name mermaid-app: Assign a name to the container for easier management
+    # -e FLASK_SECRET_KEY=...: Set the environment variable inside the container
+    # mermaid-renderer-app: The name of the image to run
+    docker run -d -p 80:5001 --name mermaid-app \
+      -e FLASK_SECRET_KEY='YOUR_GENERATED_SECRET_KEY' \
+      mermaid-renderer-app
     ```
-6.  **Access:** Open your browser to `http://127.0.0.1:5001` (or the port specified in `app.py`).
+    *Note:* If port 80 is already in use on your host, choose a different host port (e.g., `-p 8080:5001`).
 
-## Deployment to Azure Ubuntu VM
+5.  **Access the Application:** Open your web browser and navigate to `http://localhost` (or `http://your_server_ip` if deploying remotely). If you used a different host port, include it (e.g., `http://localhost:8080`).
+
+### Managing the Container
+
+*   **View logs:** `docker logs mermaid-app`
+*   **Stop:** `docker stop mermaid-app`
+*   **Start:** `docker start mermaid-app`
+*   **Remove (after stopping):** `docker rm mermaid-app`
+
+---
+
+# Deployment to Azure Ubuntu VM
 
 These steps guide you through deploying the application using Gunicorn and Nginx.
 
