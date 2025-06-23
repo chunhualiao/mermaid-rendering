@@ -17,6 +17,12 @@ This Flask application provides a web interface for rendering diagrams from [Mer
 ![Application Screenshot](sample.png)
 *Screenshot of the Mermaid Live Renderer interface.*
 
+
+## Hugging Face Space Deployment
+
+A slightly simplified version is deployed at Hugging Face Space
+* https://huggingface.co/spaces/liaoch/mermaid-rendering
+
 ## Features
 
 *   Web-based interface for entering Mermaid code.
