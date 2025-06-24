@@ -27,8 +27,19 @@ except RuntimeError as e:
 
 @app.route('/', methods=['GET'])
 def index():
-    """Simple health check for the root path."""
-    return "Mermaid Renderer App is running!", 200
+    """Display the main page with the form, including default example code."""
+    default_mermaid_code = textwrap.dedent("""
+        graph TD
+            A[Start] --> B{Is it?};
+            B -- Yes --> C[OK];
+            C --> D[End];
+            B -- No --> E[Really?];
+            E --> C;
+    """).strip()
+
+    if renderer is None:
+         flash("Error: Mermaid rendering service is unavailable due to initialization failure. Please check server logs.", "error")
+    return render_template('index.html', default_code=default_mermaid_code)
 
 @app.route('/render', methods=['POST'])
 def render_mermaid():
