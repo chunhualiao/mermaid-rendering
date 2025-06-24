@@ -95,4 +95,4 @@ ENTRYPOINT []
 # Use the port defined by FLASK_RUN_PORT
 # The number of workers (e.g., --workers 3) can be adjusted based on server resources
 # Use JSON form with the absolute path to gunicorn in the venv to avoid PATH issues
-CMD ["/app/venv/bin/gunicorn", "--workers", "3", "--bind", "0.0.0.0:5001", "app:app"]
+CMD ["/app/venv/bin/gunicorn", "--workers", "3", "--bind", "0.0.0.0:5001", "--timeout", "60", "app:app"]

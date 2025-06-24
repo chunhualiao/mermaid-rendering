@@ -175,6 +175,9 @@ def preview_mermaid():
              except OSError as e:
                  logging.error(f"Error deleting temporary input file {input_path} after download: {e}")
 
+@app.route('/healthz')
+def healthz():
+    return "OK", 200
 
 if __name__ == '__main__':
     # For local development only (use Gunicorn/Waitress in production)
