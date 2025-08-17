@@ -4,7 +4,7 @@ emoji: 🔥
 colorFrom: purple
 colorTo: red
 sdk: docker
-app_port: 80
+app_port: 7860
 pinned: false
 license: mit
 short_description: mermaid-rendering docker version
@@ -70,15 +70,15 @@ This is the recommended way to run the application, as it bundles all dependenci
     ```bash
     # Replace 'YOUR_GENERATED_SECRET_KEY' with the key from step 2.
     # -d: Run in detached mode (background)
-    # -p 80:80: Map port 80 on the host to port 80 in the container
+    # -p 7860:7860: Map port 7860 on the host to port 7860 in the container
     # --name mermaid-app: Assign a name to the container for easier management
     # -e FLASK_SECRET_KEY=...: Set the environment variable inside the container
     # mermaid-renderer-app: The name of the image to run
-    docker run -d -p 80:80 --name mermaid-app \
+    docker run -d -p 7860:7860 --name mermaid-app \
       -e FLASK_SECRET_KEY='YOUR_GENERATED_SECRET_KEY' \
       mermaid-renderer-app
     ```
-    *Note:* If port 80 is already in use on your host, choose a different host port (e.g., `-p 8080:80`).
+    *Note:* If port 7860 is already in use on your host, choose a different host port (e.g., `-p 8080:7860`).
 
 5.  **Access the Application:** Open your web browser and navigate to `http://localhost` (or `http://your_server_ip` if deploying remotely). If you used a different host port, include it (e.g., `http://localhost:8080`).
 

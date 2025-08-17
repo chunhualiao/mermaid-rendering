@@ -83,15 +83,15 @@ RUN $HOME/app/venv/bin/pip install --no-cache-dir -r $HOME/app/requirements.txt
 # Copy the rest of the application code into the container with proper ownership
 COPY --chown=user . $HOME/app
 
-# Make port 80 available to the world outside this container (required for Hugging Face Spaces)
-EXPOSE 80
+# Make port 7860 available to the world outside this container (required for Hugging Face Spaces)
+EXPOSE 7860
 
 # Define environment variables
 # IMPORTANT: Set a strong FLASK_SECRET_KEY when running the container!
 # Using a placeholder here for demonstration.
 ENV FLASK_APP=app.py
 ENV FLASK_RUN_HOST=0.0.0.0
-ENV FLASK_RUN_PORT=80
+ENV FLASK_RUN_PORT=7860
 ENV FLASK_SECRET_KEY="replace_this_in_docker_run_with_a_real_secret"
 # Add venv's bin to the PATH for subsequent commands (like CMD)
 ENV PATH="$HOME/app/venv/bin:$PATH"
@@ -102,7 +102,7 @@ ENTRYPOINT []
 # Run the application using Gunicorn when the container launches
 # Use the full path to gunicorn within the virtual environment
 # Bind to 0.0.0.0 to accept connections from outside the container
-# Use port 80 (required for Hugging Face Spaces)
+# Use port 7860 (required for Hugging Face Spaces)
 # The number of workers (e.g., --workers 3) can be adjusted based on server resources
 # Use JSON form with the absolute path to gunicorn in the venv to avoid PATH issues
-CMD ["gunicorn", "--workers", "3", "--bind", "0.0.0.0:80", "--timeout", "60", "app:app"]
+CMD ["gunicorn", "--workers", "3", "--bind", "0.0.0.0:7860", "--timeout", "60", "app:app"]

@@ -184,5 +184,5 @@ if __name__ == '__main__':
     # Use 0.0.0.0 to be accessible on the network
     # Set debug=False for production-like testing, or True for development features
     is_debug = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
-    # Use port 80 for Hugging Face Spaces compatibility
-    app.run(debug=is_debug, host='0.0.0.0', port=int(os.environ.get('PORT', 80)))
+    # Use port 7860 for Hugging Face Spaces compatibility
+    app.run(debug=is_debug, host='0.0.0.0', port=int(os.environ.get('PORT', 7860)))
