@@ -16,7 +16,7 @@ Check out the configuration reference at https://huggingface.co/docs/hub/spaces-
 
 This Flask application provides a web interface for rendering diagrams from [Mermaid](https://mermaid.js.org/) syntax code. It features a live preview that updates as you type and allows downloading the final diagram as PNG, SVG, or PDF.
 
-![Application Screenshot](sample.png)
+![Application Screenshot](https://private-user-images.githubusercontent.com/1627206/478743597-f34ee17b-ccd7-4de2-87d8-7190bd22bc5b.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTU0MDg4MjEsIm5iZiI6MTc1NTQwODUyMSwicGF0aCI6Ii8xNjI3MjA2LzQ3ODc0MzU5Ny1mMzRlZTE3Yi1jY2Q3LTRkZTItODdkOC03MTkwYmQyMmJjNWIucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI1MDgxNyUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNTA4MTdUMDUyODQxWiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9M2M1ODlhYWMzZTZlNTkwZGRiMGVkZmMzNTgzM2NhMmEwZWQ1MGY4MDcwZjVlMDVhOGMyNTk5NzA1YmU2NDA4NSZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QifQ.-XgOhzk8ZbNvsApgRpk1tnKUzeRW0S2s6lByxyNHgz4)
 *Screenshot of the Mermaid Live Renderer interface.*
 
 
