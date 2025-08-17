@@ -61,14 +61,16 @@ USER user
 
 # Set home to the user's home directory
 ENV HOME=/home/user \
-    PATH=/home/user/.local/bin:$PATH
+    PATH=/home/user/.npm-global/bin:/home/user/.local/bin:$PATH
 
 # Set the working directory to the user's home directory
 WORKDIR $HOME/app
 
-# Install mermaid-cli globally
+# Install mermaid-cli in user directory to avoid permission issues
 # Use --unsafe-perm if needed for permissions during global install
-RUN npm install -g @mermaid-js/mermaid-cli --unsafe-perm=true
+RUN mkdir -p $HOME/.npm-global && \
+    npm config set prefix '$HOME/.npm-global' && \
+    npm install -g @mermaid-js/mermaid-cli --unsafe-perm=true
 
 # Copy the requirements file first to leverage Docker cache
 # Copy with proper ownership
@@ -94,7 +96,7 @@ ENV FLASK_RUN_HOST=0.0.0.0
 ENV FLASK_RUN_PORT=7860
 ENV FLASK_SECRET_KEY="replace_this_in_docker_run_with_a_real_secret"
 # Add venv's bin to the PATH for subsequent commands (like CMD)
-ENV PATH="$HOME/app/venv/bin:$PATH"
+ENV PATH="$HOME/app/venv/bin:/home/user/.npm-global/bin:$PATH"
 
 # Override base image entrypoint so CMD executes directly
 ENTRYPOINT []
