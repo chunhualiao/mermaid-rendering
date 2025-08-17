@@ -1,7 +1,7 @@
 # Use an official Python runtime as a parent image, choosing one that includes Node.js
 # Check Docker Hub for suitable tags (e.g., python:3.9-slim-bullseye might need Node installed)
 # Or use a Node image and install Python. Let's try a Node base and add Python.
-FROM node:18-slim
+FROM node:20-slim
 
 # Install Python, pip, and venv
 # 'apt-get update && apt-get install -y --no-install-recommends' is standard practice
