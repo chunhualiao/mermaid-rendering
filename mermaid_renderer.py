@@ -17,7 +17,7 @@ class MermaidRenderer:
         self._check_dependencies()
 
     def _check_dependencies(self):
-        """Check if Node.js and @mermaid-js/mermaid-cli are installed"""
+        """Check if Node.js and npx are installed"""
         try:
             subprocess.run(["node", "--version"], capture_output=True, check=True, text=True)
             logging.info("Node.js found.")
@@ -27,23 +27,13 @@ class MermaidRenderer:
             # Consider raising an exception or handling this state in the Flask app.
             raise RuntimeError("Error: Node.js is not installed or not found in PATH.")
 
-        # Check if @mermaid-js/mermaid-cli is installed globally
-        # Note: Checking global npm packages can be slow and sometimes unreliable.
-        # A better approach in production might be to ensure it's installed during deployment.
+        # Check if npx is available
         try:
-            result = subprocess.run(["mmdc", "--version"], capture_output=True, check=True, text=True)
-            logging.info(f"@mermaid-js/mermaid-cli found: {result.stdout.strip()}")
-        except (subprocess.SubprocessError, FileNotFoundError):
-            logging.warning("@mermaid-js/mermaid-cli (mmdc) not found or failed to execute. Attempting installation...")
-            # Attempt installation if not found (consider security implications)
-            try:
-                # Using '--unsafe-perm' might be needed in some environments, but use with caution.
-                install_cmd = ["npm", "install", "-g", "@mermaid-js/mermaid-cli"]
-                subprocess.run(install_cmd, check=True, capture_output=True, text=True)
-                logging.info("@mermaid-js/mermaid-cli installed successfully via npm.")
-            except subprocess.SubprocessError as install_error:
-                logging.error(f"Failed to install @mermaid-js/mermaid-cli: {install_error.stderr}")
-                raise RuntimeError("Error: @mermaid-js/mermaid-cli (mmdc) is not installed and automatic installation failed. Please install manually: npm install -g @mermaid-js/mermaid-cli")
+            subprocess.run(["npx", "--version"], capture_output=True, check=True, text=True)
+            logging.info("npx found.")
+        except (subprocess.SubprocessError, FileNotFoundError) as e:
+            logging.error(f"npx check failed: {e}")
+            raise RuntimeError("Error: npx is not installed or not found in PATH.")
 
     def render(self, mermaid_code, output_format="png", theme="default"):
         """
@@ -80,7 +70,7 @@ class MermaidRenderer:
             temp_input_file.close() # Close file before passing to subprocess
 
             cmd = [
-                "mmdc",
+                "npx", "@mermaid-js/mermaid-cli", "mmdc",
                 "-i", input_path,
                 "-o", output_path,
                 "-t", theme,
@@ -93,7 +83,7 @@ class MermaidRenderer:
             result = subprocess.run(cmd, check=True, capture_output=True, text=True)
             logging.info(f"mmdc execution successful. Output saved to: {output_path}")
             if result.stderr:
-                 logging.warning(f"mmdc stderr: {result.stderr}")
+                logging.warning(f"mmdc stderr: {result.stderr}")
 
             # Return paths for Flask to handle; caller must delete files
             return output_path, input_path
@@ -105,14 +95,14 @@ class MermaidRenderer:
             temp_output_file.close()
             os.unlink(output_path)
             if os.path.exists(input_path): # Input file might already be closed/deleted
-                 os.unlink(input_path)
+                os.unlink(input_path)
             raise RuntimeError(f"Error rendering diagram: {e.stderr or e}")
         except Exception as e:
-             # Catch any other unexpected errors
-             logging.error(f"Unexpected error during rendering: {e}")
-             # Ensure cleanup
-             temp_input_file.close()
-             temp_output_file.close()
-             if os.path.exists(input_path): os.unlink(input_path)
-             if os.path.exists(output_path): os.unlink(output_path)
-             raise # Re-raise the caught exception
+            # Catch any other unexpected errors
+            logging.error(f"Unexpected error during rendering: {e}")
+            # Ensure cleanup
+            temp_input_file.close()
+            temp_output_file.close()
+            if os.path.exists(input_path): os.unlink(input_path)
+            if os.path.exists(output_path): os.unlink(output_path)
+            raise # Re-raise the caught exception

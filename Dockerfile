@@ -66,12 +66,6 @@ ENV HOME=/home/user \
 # Set the working directory to the user's home directory
 WORKDIR $HOME/app
 
-# Install mermaid-cli in user directory to avoid permission issues
-# Use --unsafe-perm if needed for permissions during global install
-RUN mkdir -p $HOME/.npm-global && \
-    npm config set prefix '$HOME/.npm-global' && \
-    npm install -g @mermaid-js/mermaid-cli --unsafe-perm=true
-
 # Copy the requirements file first to leverage Docker cache
 # Copy with proper ownership
 COPY --chown=user requirements.txt $HOME/app/
@@ -84,6 +78,11 @@ RUN $HOME/app/venv/bin/pip install --no-cache-dir -r $HOME/app/requirements.txt
 
 # Copy the rest of the application code into the container with proper ownership
 COPY --chown=user . $HOME/app
+
+# Install mermaid-cli locally in the project directory to avoid permission issues
+# This will be used via npx which comes with npm
+RUN npm init -y && \
+    npm install @mermaid-js/mermaid-cli
 
 # Make port 7860 available to the world outside this container (required for Hugging Face Spaces)
 EXPOSE 7860
