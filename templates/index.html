@@ -5,10 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mermaid Live Renderer</title>
     <style>
-        body { font-family: sans-serif; margin: 2em; background-color: #f4f4f4; color: #333; }
-        .container { max-width: 1200px; margin: auto; background: #fff; padding: 2em; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: flex; gap: 2em;}
+        body { font-family: sans-serif; margin: 1em; background-color: #f4f4f4; color: #333; }
+        .container { max-width: 1200px; margin: auto; background: #fff; padding: 1em; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: flex; gap: 2em;}
         .input-area { flex: 1; }
         .preview-area { flex: 1; border-left: 1px solid #eee; padding-left: 2em; }
+        
+        /* Mobile responsive styles */
+        @media (max-width: 768px) {
+            body { margin: 0.5em; }
+            .container { 
+                flex-direction: column; 
+                padding: 0.5em; 
+                gap: 1em;
+            }
+            .input-area { 
+                width: 100%; 
+            }
+            .preview-area { 
+                width: 100%; 
+                border-left: none; 
+                padding-left: 0; 
+                border-top: 1px solid #eee; 
+                padding-top: 1em; 
+            }
+            h1 { font-size: 1.5em; }
+            textarea { 
+                width: 95%; 
+                min-height: 200px; 
+            }
+            .options { 
+                flex-direction: column; 
+                align-items: stretch; 
+            }
+            .options > div { 
+                width: 100%; 
+            }
+            select { 
+                width: 100%; 
+                margin-top: 0.5em; 
+                margin-right: 0; 
+            }
+            .preview-controls { 
+                display: flex; 
+                flex-wrap: wrap; 
+                justify-content: center; 
+            }
+            .preview-controls button { 
+                padding: 0.5em; 
+                font-size: 1rem; 
+                min-width: 40px; 
+                margin: 0.2em; 
+            }
+            #preview-box { 
+                min-height: 200px; 
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container { 
+                padding: 0.3em; 
+            }
+            textarea { 
+                width: 93%; 
+                min-height: 150px; 
+            }
+            .preview-controls { 
+                display: flex; 
+                flex-wrap: wrap; 
+                justify-content: center; 
+            }
+            .preview-controls button { 
+                flex: 1 1 30%; 
+                margin: 0.2em; 
+            }
+        }
         h1 { color: #555; text-align: center; margin-bottom: 1em; width: 100%;}
         label { display: block; margin-top: 1em; font-weight: bold; }
         textarea { width: 95%; min-height: 300px; margin-top: 0.5em; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: monospace; font-size: 1rem; }
