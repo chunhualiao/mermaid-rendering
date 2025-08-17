@@ -4,6 +4,7 @@ emoji: 🔥
 colorFrom: purple
 colorTo: red
 sdk: docker
+app_port: 80
 pinned: false
 license: mit
 short_description: mermaid-rendering docker version

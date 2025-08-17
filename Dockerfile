@@ -53,24 +53,35 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Set the working directory in the container
-WORKDIR /app
+# Set up a new user named "user" with user ID 1000 (required for Docker Spaces)
+RUN useradd -m -u 1000 user
+
+# Switch to the "user" user
+USER user
+
+# Set home to the user's home directory
+ENV HOME=/home/user \
+    PATH=/home/user/.local/bin:$PATH
+
+# Set the working directory to the user's home directory
+WORKDIR $HOME/app
 
 # Install mermaid-cli globally
 # Use --unsafe-perm if needed for permissions during global install
 RUN npm install -g @mermaid-js/mermaid-cli --unsafe-perm=true
 
 # Copy the requirements file first to leverage Docker cache
-COPY requirements.txt ./
+# Copy with proper ownership
+COPY --chown=user requirements.txt $HOME/app/
 
 # Create a virtual environment and install Python dependencies
 # This isolates Python packages within the container, similar to local setup
-RUN python3 -m venv /app/venv
+RUN python3 -m venv $HOME/app/venv
 # Activate venv for the RUN command and install packages
-RUN . /app/venv/bin/activate && pip install --no-cache-dir -r requirements.txt
+RUN $HOME/app/venv/bin/pip install --no-cache-dir -r $HOME/app/requirements.txt
 
-# Copy the rest of the application code into the container
-COPY . .
+# Copy the rest of the application code into the container with proper ownership
+COPY --chown=user . $HOME/app
 
 # Make port 80 available to the world outside this container (required for Hugging Face Spaces)
 EXPOSE 80
@@ -83,7 +94,7 @@ ENV FLASK_RUN_HOST=0.0.0.0
 ENV FLASK_RUN_PORT=80
 ENV FLASK_SECRET_KEY="replace_this_in_docker_run_with_a_real_secret"
 # Add venv's bin to the PATH for subsequent commands (like CMD)
-ENV PATH="/app/venv/bin:$PATH"
+ENV PATH="$HOME/app/venv/bin:$PATH"
 
 # Override base image entrypoint so CMD executes directly
 ENTRYPOINT []
@@ -94,4 +105,4 @@ ENTRYPOINT []
 # Use port 80 (required for Hugging Face Spaces)
 # The number of workers (e.g., --workers 3) can be adjusted based on server resources
 # Use JSON form with the absolute path to gunicorn in the venv to avoid PATH issues
-CMD ["/app/venv/bin/gunicorn", "--workers", "3", "--bind", "0.0.0.0:80", "--timeout", "60", "app:app"]
+CMD ["gunicorn", "--workers", "3", "--bind", "0.0.0.0:80", "--timeout", "60", "app:app"]
