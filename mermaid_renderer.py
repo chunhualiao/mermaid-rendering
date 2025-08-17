@@ -70,7 +70,7 @@ class MermaidRenderer:
             temp_input_file.close() # Close file before passing to subprocess
 
             cmd = [
-                "npx", "@mermaid-js/mermaid-cli", "mmdc",
+                "npx", "@mermaid-js/mermaid-cli",
                 "-i", input_path,
                 "-o", output_path,
                 "-t", theme,
